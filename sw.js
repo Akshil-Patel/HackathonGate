@@ -1,9 +1,9 @@
-const CACHE_NAME = 'hackathon-gate-v1';
+const CACHE_NAME = 'hackathon-gate-v2';
 const ASSETS = [
     './',
     './index.html',
     './app.js',
-    './icon.svg',
+    './logo.jpg',
     './manifest.json'
 ];
 
@@ -15,7 +15,15 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-    e.waitUntil(self.clients.claim());
+    e.waitUntil(
+        caches.keys().then((keyList) =>
+            Promise.all(keyList.map((key) => {
+                if (key !== CACHE_NAME) {
+                    return caches.delete(key);
+                }
+            }))
+        ).then(() => self.clients.claim())
+    );
 });
 
 self.addEventListener('fetch', (e) => {
