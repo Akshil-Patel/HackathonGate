@@ -14,8 +14,182 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Validation Registry - Mock 150 Teams (TEAM_001 to TEAM_150)
-const validTeams = Array.from({length: 150}, (_, i) => `TEAM_${String(i + 1).padStart(3, '0')}`);
+// Validation Registry - 138 Teams (TEAM_001 to TEAM_138)
+
+const teamRegistry = {
+    TEAM_001: { name: 'SUSTAINIQ', leader: 'ZEENATH MISBA JANGUBHAI' },
+    TEAM_002: { name: 'INNOVATIVEX', leader: 'DEEPA C SHET' },
+    TEAM_003: { name: '', leader: 'AMEER HAMZA MOMIN' },
+    TEAM_004: { name: '', leader: 'SUJAL SINGH RATHORE' },
+    TEAM_005: { name: 'HELLFIRE HACKERS', leader: 'BALAJI BHAGIRATH M BODDUCHERLA' },
+    TEAM_006: { name: 'CODE STOM', leader: 'KRUPA' },
+    TEAM_007: { name: 'CODE WARRIORS', leader: 'ABHISHEK ANNIGERI' },
+    TEAM_008: { name: 'CTRL+ALT+ELITE', leader: 'ASHIFALI NADAF' },
+    TEAM_009: { name: '', leader: 'MONISHA JADHAV' },
+    TEAM_010: { name: 'PEAKY CODERS', leader: 'MALLIKARJUN JADI' },
+    TEAM_011: { name: '', leader: 'NAGARAJ SURAGOND' },
+    TEAM_012: { name: '', leader: 'SAYED KHALEEL AHMED R' },
+    TEAM_013: { name: '', leader: 'ROHIT V GOKARNAKAR' },
+    TEAM_014: { name: 'TECH TITANS', leader: 'HARSH V SANU' },
+    TEAM_015: { name: 'VIBECODERS 6SEVEN', leader: 'SAYED KHALEEL AHMED R' },
+    TEAM_016: { name: 'ALGORIFT', leader: 'BHAVANI DENGI' },
+    TEAM_017: { name: 'CODE AXIS', leader: 'SONU PARASHURAM BALAGAVI' },
+    TEAM_018: { name: 'HACK HORIZON', leader: 'ANJUM KAGINALLI' },
+    TEAM_019: { name: 'CODEX', leader: 'NITYANAND PATIL' },
+    TEAM_020: { name: '', leader: 'RUDRESH I G' },
+    TEAM_021: { name: '4LOOPS', leader: 'RUMMAN KHAN' },
+    TEAM_022: { name: 'RUNTIME TERROR', leader: 'KOUSARJAHA NADAF' },
+    TEAM_023: { name: 'HACKOHOLICS', leader: 'SHARANUKUMAR I BEVINAMARAD' },
+    TEAM_024: { name: 'INNOVENTURES', leader: 'SANJEEV KADAKOL' },
+    TEAM_025: { name: '', leader: 'VARSHA KAMATH' },
+    TEAM_026: { name: '', leader: 'KAUSHAL L KARKERA' },
+    TEAM_027: { name: '', leader: 'MAHALAXMI VISHNU SHANBHAG' },
+    TEAM_028: { name: 'V3S CODERS', leader: 'SAMARTH SUDESH KAMATH' },
+    TEAM_029: { name: 'ECONEXUS', leader: 'KALI KUMARI' },
+    TEAM_030: { name: 'COLLEGE COLLAB', leader: 'OJASVI TIWARI' },
+    TEAM_031: { name: 'BITFORGE', leader: 'AFNAN PASHA' },
+    TEAM_032: { name: 'TEAM KURONAMI', leader: 'ARNAV GUPTA' },
+    TEAM_033: { name: 'TEAM ARAXYS', leader: 'ARANYA BANDHU' },
+    TEAM_034: { name: 'NEXUS', leader: 'SRUJAN DABADI' },
+    TEAM_035: { name: 'GMU SPARK', leader: 'POORNIMA B' },
+    TEAM_036: { name: '', leader: 'AARZU TAHEREEM' },
+    TEAM_037: { name: 'TEAM CIPHER', leader: 'POOJITHA SAI K' },
+    TEAM_038: { name: 'ALTERNATIVES', leader: 'SHRINIVAS SAMNEKAR' },
+    TEAM_039: { name: 'RICE', leader: 'DHANUSH SHISANALLI' },
+    TEAM_040: { name: 'CODEX', leader: 'SUSHMITA NISHANDAR' },
+    TEAM_041: { name: 'CODE BLOODED', leader: 'SHIVAKUMAR B C' },
+    TEAM_042: { name: 'TECH TITANS', leader: 'SANKALPA SARAGANACHARI' },
+    TEAM_043: { name: 'NISHCHAYA', leader: 'PARASHARAM GURAV' },
+    TEAM_044: { name: 'INFINITE LOOPERS', leader: 'ULLAS M' },
+    TEAM_045: { name: 'BEGINNERS', leader: 'MAILARI CHATRAGUDI' },
+    TEAM_046: { name: 'CORE CODERS', leader: 'NAMRATHA .S' },
+    TEAM_047: { name: 'ECO STACK', leader: 'BHUVANA.B.R' },
+    TEAM_048: { name: 'TECH DRIFTERS', leader: 'SAGAL PREET SINGH' },
+    TEAM_049: { name: 'TECH MINDS', leader: 'JYOTI RAKTADE' },
+    TEAM_050: { name: 'RESONANCE', leader: 'AJIT HUDED' },
+    TEAM_051: { name: 'GHOST PROTOCOL', leader: 'OMKAR SHIRVALKAR' },
+    TEAM_052: { name: 'HACK LORDS', leader: 'PRATHAM WADIYAR' },
+    TEAM_053: { name: 'QUANTANIONS', leader: 'KSHITIJ ACHARI' },
+    TEAM_054: { name: 'TEAM DARWIN', leader: 'PRATHMESH REDEKAR' },
+    TEAM_055: { name: 'AISERS', leader: 'SUJEET PAWAR' },
+    TEAM_056: { name: 'TEAM NEXORA', leader: 'SANIKA PATIL' },
+    TEAM_057: { name: 'NEUROLENS', leader: 'S H NUSAIR' },
+    TEAM_058: { name: 'HACK HUSTLERS', leader: 'MOHAMMED AIYAN BIJAPUR' },
+    TEAM_059: { name: '', leader: 'PRAJWAL A AMARAVATI' },
+    TEAM_060: { name: 'CODECOMETS', leader: 'ADITYA RAJESH HANASHI' },
+    TEAM_061: { name: 'STRAW_HAT_CODERS', leader: 'SHREYAS UGARGOL' },
+    TEAM_062: { name: 'SHADOW NETWORK', leader: 'MOHAMMED KHASIM' },
+    TEAM_063: { name: '', leader: 'PRATIK PATIL' },
+    TEAM_064: { name: 'TECH TITANS', leader: 'RAKSHITA RAJUR' },
+    TEAM_065: { name: 'QUANTUMREALM', leader: 'SRIKRISHNA HIREHOLI' },
+    TEAM_066: { name: '', leader: 'ANJALI' },
+    TEAM_067: { name: '', leader: 'PARTHA B N' },
+    TEAM_068: { name: 'THE A-TEAM', leader: 'CHAITRA VADDAR' },
+    TEAM_069: { name: 'GRIT FORGE', leader: 'VIJAYALAXMI MG' },
+    TEAM_070: { name: 'MANBANDHU', leader: 'HARISH BHADRAKALI' },
+    TEAM_071: { name: 'SOCIETALFLY', leader: 'SANKET KHADI' },
+    TEAM_072: { name: 'AQUA LOGIC', leader: 'SHUBHAM BASAVARAJ BAGODI' },
+    TEAM_073: { name: 'TEAM VAMOS', leader: 'CHINMAYA KULKARNI' },
+    TEAM_074: { name: 'SYNTAXION', leader: 'MOHAMMED ARSH KOTWAL' },
+    TEAM_075: { name: 'CODE CREW', leader: 'KRUTIKA D BENAKANNAVAR' },
+    TEAM_076: { name: 'CODE CA CATSLYSTS', leader: 'SAMPRADA M SHINDHE' },
+    TEAM_077: { name: 'BITWISE', leader: 'SWAYAM KENNURKAR' },
+    TEAM_078: { name: 'HACK PLUS', leader: 'SWATI N JAGATAP' },
+    TEAM_079: { name: 'QUBIT', leader: 'NAVEENGOUDA BEVINAMARAD' },
+    TEAM_080: { name: 'CODE PIRATES', leader: 'SUMUKH R CHAVAN' },
+    TEAM_081: { name: 'VISION HACKERS', leader: 'NAKSHATRA DEVAKAR' },
+    TEAM_082: { name: 'CODERS OF THE CARIBBEAN', leader: 'SANJANA DHAWALE' },
+    TEAM_083: { name: 'VISION CODERS', leader: 'ANUSHREE C BARAKER' },
+    TEAM_084: { name: 'TECH SPARK', leader: 'SHOAIB AHMED PATHAN' },
+    TEAM_085: { name: '', leader: 'TEJAS S WAJVE' },
+    TEAM_086: { name: '', leader: 'DICKEN KUMAR K' },
+    TEAM_087: { name: '', leader: 'HARSHITHA K S' },
+    TEAM_088: { name: '', leader: 'KISHAN S SHETTY' },
+    TEAM_089: { name: '', leader: 'ADITHI M D' },
+    TEAM_090: { name: 'VIBEX', leader: 'MURALIMITHUN C S' },
+    TEAM_091: { name: 'TECH BUSTERS', leader: 'NAUMAN SHAH' },
+    TEAM_092: { name: 'THE OHMIES', leader: 'RAJAVARDHAN S G' },
+    TEAM_093: { name: 'BEESUN', leader: 'SUNAINA BIRADAR' },
+    TEAM_094: { name: 'LATENT', leader: 'T G PRANITA YADAV' },
+    TEAM_095: { name: 'BYATE CODERS', leader: 'PRAGATI CHOUGALE' },
+    TEAM_096: { name: 'BRAINY BOTS', leader: 'MAHERA MUSKAN' },
+    TEAM_097: { name: 'POWER RANGERS', leader: 'KEERTHAN' },
+    TEAM_098: { name: 'BYTE ALCHEMISTS', leader: 'J SHRAVANI' },
+    TEAM_099: { name: 'CODE BLODDED', leader: 'RAJESH KUMAR P' },
+    TEAM_100: { name: 'HACK HOUSE', leader: 'SHIVANI MP' },
+    TEAM_101: { name: "ZERO 1'S", leader: 'PRIYANKA JAGADEESH LANKEPPANAVAR' },
+    TEAM_102: { name: 'COGNITIVE CODERS', leader: 'SUPRIYA S' },
+    TEAM_103: { name: 'INNOVATORS', leader: 'TEJASWINI MALI' },
+    TEAM_104: { name: 'CODE PHOENIX', leader: 'TEJAS SUTRAVE' },
+    TEAM_105: { name: 'CODE SQUAD', leader: 'CHETAN KUBIHAL' },
+    TEAM_106: { name: 'TITANS', leader: 'KARAN NAVALAGUND' },
+    TEAM_107: { name: 'TECH TITANS', leader: 'KHUSHI JANADRI' },
+    TEAM_108: { name: '', leader: 'NAVEEN B GURIKAR' },
+    TEAM_109: { name: 'HACKSTACK', leader: 'NISCHITA V JOGUR' },
+    TEAM_110: { name: '', leader: 'PRATHAM MANJUNATH HEGDE' },
+    TEAM_111: { name: 'CTRL+ALT+LEGENDS', leader: 'SUMANGALA S SIPOY' },
+    TEAM_112: { name: '', leader: 'SRUSHTI' },
+    TEAM_113: { name: '808 IMPERIUM', leader: 'PRUTHVI SHETTY' },
+    TEAM_114: { name: 'HACKAI', leader: 'REYNOL DSOUZA' },
+    TEAM_115: { name: 'PHOENIX', leader: 'PRANAV L KAMATH' },
+    TEAM_116: { name: 'BIT SQUARE', leader: 'MANOJ KUMAR' },
+    TEAM_117: { name: 'RECKONERS', leader: 'GAYATRI KANAVALLI' },
+    TEAM_118: { name: 'BELIEVERS', leader: 'ARUNDHATI N' },
+    TEAM_119: { name: 'THINK TOGETHER', leader: 'RANJITA TOPANNAVAR' },
+    TEAM_120: { name: 'BICODERS', leader: 'MANOJ ANNIGERI' },
+    TEAM_121: { name: 'HACK TITANS', leader: 'ANUSHA T' },
+    TEAM_122: { name: 'ERROR404', leader: 'VIJAYENDRA G' },
+    TEAM_123: { name: 'TEAM OPTIMIZERS', leader: 'SPANDAN M. SATAPUTE' },
+    TEAM_124: { name: 'VISION CODERS', leader: 'NOUSHAD AHMED B NADAF' },
+    TEAM_125: { name: 'VIBECODERS', leader: 'PREETHESH CARVALHO' },
+    TEAM_126: { name: 'DREAMERS', leader: 'MAHEEN ALALKHAN' },
+    TEAM_127: { name: 'WEB PIN BITA', leader: 'SAYYED KAIF KAZI' },
+    TEAM_128: { name: 'WEB PIN GAMA', leader: 'KAIF ALALKHAN' },
+    TEAM_129: { name: 'FUSION 4.O', leader: 'PRADEEP BADIGER' },
+    TEAM_130: { name: 'STARCODERS', leader: 'M YASHWANTH' },
+    TEAM_131: { name: 'TECH TITANS', leader: 'SANTOSH SANADI' },
+    TEAM_132: { name: 'TECH VAULT', leader: 'FATHIMA SHAAZNIYA' },
+    TEAM_133: { name: 'DATA DOMINATORS', leader: 'RAJALAXMI CHABBI' },
+    TEAM_134: { name: 'TETRATECH', leader: 'SHIVAKUMAR BASAYYA KENJADIMATH' },
+    TEAM_135: { name: 'TECH TWINS', leader: '' },
+    TEAM_136: { name: 'CORETECH', leader: 'GULNAAZ' },
+    TEAM_137: { name: "THE PROMPT ENGINEER'S", leader: 'KRUPA VIJAYPUR' },
+    TEAM_138: { name: 'AGADI RULES', leader: '' },
+};
+
+// Build a case-insensitive lookup: scanned name -> TEAM_XXX
+// QR codes contain team name or leader name (if team name is empty)
+const nameLookup = {};
+for (const [teamId, info] of Object.entries(teamRegistry)) {
+    // Add team name to lookup (if available)
+    if (info.name && info.name.trim() !== '') {
+        nameLookup[info.name.trim().toUpperCase()] = teamId;
+    }
+    // Add leader name to lookup (if available)
+    if (info.leader && info.leader.trim() !== '') {
+        nameLookup[info.leader.trim().toUpperCase()] = teamId;
+    }
+}
+
+// Resolve a scanned value (team name or leader name) to a TEAM_XXX id
+function resolveTeamId(scannedValue) {
+    if (!scannedValue) return null;
+    const key = scannedValue.trim().toUpperCase();
+    // Direct name/leader match
+    if (nameLookup[key]) return nameLookup[key];
+    // Also accept TEAM_XXX format as fallback
+    if (teamRegistry[key]) return key;
+    return null;
+}
+
+// Helper: get display name for a team
+function getTeamDisplayName(teamId) {
+    const entry = teamRegistry[teamId];
+    if (!entry) return teamId;
+    if (entry.name && entry.name.trim() !== '') return entry.name;
+    if (entry.leader && entry.leader.trim() !== '') return entry.leader;
+    return teamId;
+}
 
 // Local State Derived from Firebase Events
 let gateData = {
@@ -138,18 +312,20 @@ onValue(ref(db, 'events'), (snapshot) => {
 });
 
 // Process Check IN / OUT
-window.processTeamEntry = function(teamId) {
+window.processTeamEntry = function(scannedValue) {
     initAudio(); // Required to unlock audio context on iOS/Android from click
     
-    if (!teamId || teamId.trim() === '') return;
-    teamId = teamId.trim().toUpperCase();
+    if (!scannedValue || scannedValue.trim() === '') return;
+    scannedValue = scannedValue.trim();
 
-    if (!validTeams.includes(teamId)) {
-        showToast(`Invalid Team ID: ${teamId}`, 'error');
+    const teamId = resolveTeamId(scannedValue);
+    if (!teamId) {
+        showToast(`Invalid Team: ${scannedValue}`, 'error');
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         return;
     }
 
+    const displayName = getTeamDisplayName(teamId);
     const now = Date.now();
     let teamState = gateData.teams[teamId];
     let isCurrentlyIn = (teamState && teamState.lastStatus === 'IN');
@@ -163,10 +339,10 @@ window.processTeamEntry = function(teamId) {
         timestamp: now
     }).then(() => {
         if (newEventType === 'IN') {
-            showToast(`${teamId} Checked IN`, 'success');
+            showToast(`${displayName} Checked IN`, 'success');
             if (navigator.vibrate) navigator.vibrate([100]);
         } else {
-            showToast(`${teamId} Checked OUT`, 'info');
+            showToast(`${displayName} Checked OUT`, 'info');
             if (navigator.vibrate) navigator.vibrate([100]);
         }
     }).catch(err => {
@@ -388,6 +564,7 @@ function renderActivityLog() {
                     ${iconConfig}
                     <div>
                         <p class="font-label-bold text-on-surface">${act.teamId}</p>
+                        <p class="font-caption text-on-surface-variant" style="font-size:11px;">${getTeamDisplayName(act.teamId)}</p>
                         <p class="font-caption text-on-surface-variant">${formatTimeAgo(act.timestamp)}</p>
                     </div>
                 </div>
@@ -444,6 +621,7 @@ function renderLeaderboard() {
                         <p class="font-label-bold text-on-surface">${stat.teamId}</p>
                         ${stat.isWorking ? `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Currently Working"></span>` : ''}
                     </div>
+                    <p class="font-caption text-on-surface-variant" style="font-size:11px;">${getTeamDisplayName(stat.teamId)}</p>
                     <p class="font-caption text-on-surface-variant">Working Time</p>
                 </div>
             </div>
