@@ -545,22 +545,19 @@ window.handleManualSubmitEnter = function(event) {
 
 // CSV Export
 window.exportCSV = function() {
-    let csv = 'Team ID,Total Working Time (Formatted),Total Milliseconds\n';
+    let csv = 'Team Name,Team ID,Members Inside\n';
     
-    const now = Date.now();
     const teamStats = Object.keys(gateData.teams).map(teamId => {
         const t = gateData.teams[teamId];
-        let totalMs = t.accumulatedTimeMs;
-        if (t.membersInside > 0 && t.lastInTimestamp) {
-            totalMs += (now - t.lastInTimestamp);
-        }
-        return { teamId, totalMs };
+        return { teamId, membersInside: t.membersInside };
     });
     
-    teamStats.sort((a, b) => b.totalMs - a.totalMs);
+    // Sort by members inside (most first), then by team ID
+    teamStats.sort((a, b) => b.membersInside - a.membersInside || a.teamId.localeCompare(b.teamId));
     
     teamStats.forEach(stat => {
-        csv += `${stat.teamId},${formatDuration(stat.totalMs)},${stat.totalMs}\n`;
+        const displayName = getTeamDisplayName(stat.teamId);
+        csv += `${displayName} ${stat.membersInside},${stat.teamId},${stat.membersInside}\n`;
     });
     
     csv += '\n\nRaw Activity Log\n';
@@ -658,14 +655,9 @@ function renderLeaderboard() {
     if(!list || !noStats) return;
     list.innerHTML = '';
     
-    const now = Date.now();
     const teamStats = Object.keys(gateData.teams).map(teamId => {
         const t = gateData.teams[teamId];
-        let totalMs = t.accumulatedTimeMs;
-        if (t.membersInside > 0 && t.lastInTimestamp) {
-            totalMs += (now - t.lastInTimestamp);
-        }
-        return { teamId, totalMs, isWorking: t.membersInside > 0, membersInside: t.membersInside };
+        return { teamId, membersInside: t.membersInside };
     });
     
     if (teamStats.length === 0) {
@@ -674,31 +666,39 @@ function renderLeaderboard() {
     }
     
     noStats.classList.add('hidden');
-    teamStats.sort((a, b) => b.totalMs - a.totalMs);
+    // Sort by members inside (most first), then by team ID
+    teamStats.sort((a, b) => b.membersInside - a.membersInside || a.teamId.localeCompare(b.teamId));
     
     teamStats.forEach((stat, index) => {
         const li = document.createElement('li');
         li.className = "flex items-center justify-between p-4";
         
-        let rankColor = "text-on-surface-variant";
-        if (index === 0) rankColor = "text-yellow-600 font-bold";
-        else if (index === 1) rankColor = "text-slate-400 font-bold";
-        else if (index === 2) rankColor = "text-amber-700 font-bold";
+        // Build member dots
+        let dotsHtml = '<div class="flex gap-1">';
+        for (let i = 0; i < 4; i++) {
+            const isInside = i < stat.membersInside;
+            dotsHtml += `<span class="w-2.5 h-2.5 rounded-full ${isInside ? 'bg-green-500' : 'bg-gray-300'}"></span>`;
+        }
+        dotsHtml += '</div>';
+
+        // Status badge
+        const statusBadge = stat.membersInside > 0
+            ? `<div class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full font-caption font-bold">${stat.membersInside} / 4</div>`
+            : `<div class="bg-gray-100 text-gray-400 px-3 py-1 rounded-full font-caption font-bold">0 / 4</div>`;
 
         li.innerHTML = `
             <div class="flex items-center gap-4">
-                <span class="w-6 text-center ${rankColor}">#${index + 1}</span>
                 <div>
                     <div class="flex items-center gap-2">
-                        <p class="font-label-bold text-on-surface">${stat.teamId}</p>
-                        ${stat.isWorking ? `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Currently Working"></span>` : ''}
+                        <p class="font-label-bold text-on-surface">${getTeamDisplayName(stat.teamId)} ${stat.membersInside}</p>
+                        ${stat.membersInside > 0 ? `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Members Inside"></span>` : ''}
                     </div>
-                    <p class="font-caption text-on-surface-variant" style="font-size:11px;">${getTeamDisplayName(stat.teamId)}</p>
-                    <p class="font-caption text-on-surface-variant">Working Time</p>
+                    <p class="font-caption text-on-surface-variant" style="font-size:11px;">${stat.teamId}</p>
+                    ${dotsHtml}
                 </div>
             </div>
-            <div class="font-mono font-medium text-on-surface">
-                ${formatDuration(stat.totalMs)}
+            <div class="flex items-center gap-2">
+                ${statusBadge}
             </div>
         `;
         list.appendChild(li);
