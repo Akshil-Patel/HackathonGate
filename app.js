@@ -120,7 +120,7 @@ const teamRegistry = {
     TEAM_101: { name: "ZERO 1'S", leader: 'PRIYANKA JAGADEESH LANKEPPANAVAR' },
     TEAM_102: { name: 'COGNITIVE CODERS', leader: 'SUPRIYA S' },
     TEAM_103: { name: 'INNOVATORS', leader: 'TEJASWINI MALI' },
-    TEAM_104: { name: 'CODE PHOENIX', leader: 'TEJAS SUTRAVE' },
+    TEAM_104: { name: 'tejassutrave@gmail.com', leader: 'TEJAS SUTRAVE' },
     TEAM_105: { name: 'CODE SQUAD', leader: 'CHETAN KUBIHAL' },
     TEAM_106: { name: 'TITANS', leader: 'KARAN NAVALAGUND' },
     TEAM_107: { name: 'TECH TITANS', leader: 'KHUSHI JANADRI' },
