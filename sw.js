@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hackathon-gate-v6';
+const CACHE_NAME = 'hackathon-gate-v7';
 const ASSETS = [
     './',
     './index.html',

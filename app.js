@@ -294,12 +294,14 @@ onValue(ref(db, 'events'), (snapshot) => {
             
             if (evt.type === 'IN') {
                 teamState.membersInside = Math.min(MAX_MEMBERS, teamState.membersInside + 1);
+                evt.memberNumber = teamState.membersInside; // e.g. "Member 2 Checked IN" means now 2 are inside
                 // Track when first member enters (for time accumulation)
                 if (teamState.membersInside === 1) {
                     teamState.lastInTimestamp = evt.timestamp;
                 }
                 teamState.inCount++;
             } else if (evt.type === 'OUT') {
+                evt.memberNumber = teamState.membersInside; // before decrement: e.g. "Member 3 Checked OUT" means was 3, now 2
                 teamState.membersInside = Math.max(0, teamState.membersInside - 1);
                 // Accumulate time when last member leaves
                 if (teamState.membersInside === 0 && teamState.lastInTimestamp) {
@@ -561,12 +563,14 @@ window.exportCSV = function() {
     });
     
     csv += '\n\nRaw Activity Log\n';
-    csv += 'Timestamp,Date,Time,Team ID,Action\n';
+    csv += 'Timestamp,Date,Time,Team Name,Team ID,Member #,Action\n';
     
     const reversedLog = [...gateData.activityLog].reverse(); // chronological
     reversedLog.forEach(act => {
         const d = new Date(act.timestamp);
-        csv += `${act.timestamp},${d.toLocaleDateString()},${d.toLocaleTimeString()},${act.teamId},${act.type}\n`;
+        const displayName = getTeamDisplayName(act.teamId);
+        const memberNum = act.memberNumber || '';
+        csv += `${act.timestamp},${d.toLocaleDateString()},${d.toLocaleTimeString()},${displayName},${act.teamId},${memberNum},${act.type}\n`;
     });
     
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -620,20 +624,21 @@ function renderActivityLog() {
             li.className = "min-h-[64px] flex items-center justify-between px-md py-sm hover:bg-surface-container-low";
             
             const isOut = act.type === 'OUT';
+            const memberNum = act.memberNumber || '?';
             const iconConfig = isOut 
                 ? `<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">logout</span></div>`
                 : `<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span></div>`;
                 
             const badgeConfig = isOut
-                ? `<div class="bg-[#fef08a] text-[#854d0e] px-3 py-1 rounded-full font-caption font-medium">OUT</div>`
-                : `<div class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full font-caption font-medium">IN</div>`;
+                ? `<div class="bg-[#fef08a] text-[#854d0e] px-3 py-1 rounded-full font-caption font-medium">M${memberNum} OUT</div>`
+                : `<div class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full font-caption font-medium">M${memberNum} IN</div>`;
 
             li.innerHTML = `
                 <div class="flex items-center gap-md flex-1">
                     ${iconConfig}
                     <div>
-                        <p class="font-label-bold text-on-surface">${act.teamId}</p>
-                        <p class="font-caption text-on-surface-variant" style="font-size:11px;">${getTeamDisplayName(act.teamId)}</p>
+                        <p class="font-label-bold text-on-surface">${getTeamDisplayName(act.teamId)}</p>
+                        <p class="font-caption text-on-surface-variant" style="font-size:11px;">${act.teamId}</p>
                         <p class="font-caption text-on-surface-variant">${formatTimeAgo(act.timestamp)}</p>
                     </div>
                 </div>
