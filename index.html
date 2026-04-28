@@ -113,12 +113,185 @@
         .hidden-view { display: none !important; }
         .nav-item-active { color: #1d4ed8 !important; } /* text-blue-700 */
         .nav-item-active .nav-bg { background-color: #eff6ff !important; } /* bg-blue-50 */
+
+        /* Action Modal Styles */
+        .action-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .action-modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .action-modal-sheet {
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px 20px 32px;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.12);
+        }
+        .action-modal-backdrop.active .action-modal-sheet {
+            transform: translateY(0);
+        }
+        .action-modal-handle {
+            width: 40px;
+            height: 4px;
+            background: #d1d5db;
+            border-radius: 9999px;
+            margin: 0 auto 16px;
+        }
+        .action-modal-team-name {
+            font-family: Inter, sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #191b23;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .action-modal-team-id {
+            font-family: Inter, sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #737686;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .action-modal-member-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: Inter, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #434655;
+            margin-bottom: 20px;
+            padding: 10px 16px;
+            background: #f3f4f6;
+            border-radius: 12px;
+        }
+        .action-modal-member-info .member-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .action-modal-member-info .member-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #d1d5db;
+            transition: background 0.2s;
+        }
+        .action-modal-member-info .member-dot.inside {
+            background: #22c55e;
+        }
+        .action-modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .action-modal-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px 16px;
+            border-radius: 16px;
+            border: 2px solid transparent;
+            font-family: Inter, sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-modal-btn:active {
+            transform: scale(0.96);
+        }
+        .action-modal-btn.checkin {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+        .action-modal-btn.checkin:hover {
+            background: #bbf7d0;
+            border-color: #4ade80;
+        }
+        .action-modal-btn.checkout {
+            background: #fef9c3;
+            color: #854d0e;
+            border-color: #fde68a;
+        }
+        .action-modal-btn.checkout:hover {
+            background: #fef08a;
+            border-color: #fcd34d;
+        }
+        .action-modal-btn .btn-icon {
+            font-size: 32px;
+        }
+        .action-modal-cancel {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            border: none;
+            background: #f3f4f6;
+            color: #737686;
+            border-radius: 12px;
+            font-family: Inter, sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .action-modal-cancel:hover {
+            background: #e5e7eb;
+        }
+        .action-modal-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen pb-safe">
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none"></div>
+
+    <!-- Check In / Check Out Action Modal -->
+    <div id="action-modal-backdrop" class="action-modal-backdrop" onclick="closeActionModal()">
+        <div class="action-modal-sheet" onclick="event.stopPropagation()">
+            <div class="action-modal-handle"></div>
+            <div id="action-modal-team-name" class="action-modal-team-name"></div>
+            <div id="action-modal-team-id" class="action-modal-team-id"></div>
+            <div id="action-modal-member-info" class="action-modal-member-info">
+                <span>Members inside:</span>
+                <div id="action-modal-dots" class="member-dots"></div>
+                <span id="action-modal-count"></span>
+            </div>
+            <div class="action-modal-buttons">
+                <button id="action-modal-checkin-btn" class="action-modal-btn checkin" onclick="confirmAction('IN')">
+                    <span class="material-symbols-outlined btn-icon" style="font-variation-settings: 'FILL' 1;">login</span>
+                    Check In
+                </button>
+                <button id="action-modal-checkout-btn" class="action-modal-btn checkout" onclick="confirmAction('OUT')">
+                    <span class="material-symbols-outlined btn-icon">logout</span>
+                    Check Out
+                </button>
+            </div>
+            <button class="action-modal-cancel" onclick="closeActionModal()">Cancel</button>
+        </div>
+    </div>
 
     <!-- TopAppBar -->
     <header class="bg-white dark:bg-gray-900 docked full-width top-0 border-b border-gray-200 dark:border-gray-800 flat no shadows flex items-center justify-center px-5 w-full h-14 md:h-16 gap-2">

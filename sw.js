@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hackathon-gate-v3';
+const CACHE_NAME = 'hackathon-gate-v4';
 const ASSETS = [
     './',
     './index.html',
@@ -30,11 +30,20 @@ self.addEventListener('fetch', (e) => {
     // Only intercept local navigation/asset requests, not Firebase API requests
     if (!e.request.url.startsWith(self.location.origin)) return;
     
+    // Network-first strategy: always try to fetch fresh content,
+    // fall back to cache only when offline
     e.respondWith(
-        caches.match(e.request).then((response) => {
-            return response || fetch(e.request);
+        fetch(e.request).then((response) => {
+            // Cache the fresh response for offline use
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+                cache.put(e.request, responseClone);
+            });
+            return response;
         }).catch(() => {
-            return caches.match('./index.html');
+            return caches.match(e.request).then((response) => {
+                return response || caches.match('./index.html');
+            });
         })
     );
 });

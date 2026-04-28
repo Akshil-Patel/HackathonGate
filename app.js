@@ -194,8 +194,13 @@ function getTeamDisplayName(teamId) {
 // Local State Derived from Firebase Events
 let gateData = {
     activityLog: [], 
-    teams: {} 
+    teams: {} // { teamId: { membersInside: 0, accumulatedTimeMs: 0, lastInTimestamp: null, inCount: 0 } }
 };
+
+const MAX_MEMBERS = 4; // Max members per team
+
+// Action Modal State
+let pendingTeamId = null;
 
 // Web Audio API Context
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -284,15 +289,20 @@ onValue(ref(db, 'events'), (snapshot) => {
             const teamId = evt.teamId;
             let teamState = newTeams[teamId];
             if (!teamState) {
-                teamState = { lastStatus: 'OUT', lastInTimestamp: null, accumulatedTimeMs: 0 };
+                teamState = { membersInside: 0, accumulatedTimeMs: 0, lastInTimestamp: null, inCount: 0 };
             }
             
             if (evt.type === 'IN') {
-                teamState.lastStatus = 'IN';
-                teamState.lastInTimestamp = evt.timestamp;
+                teamState.membersInside = Math.min(MAX_MEMBERS, teamState.membersInside + 1);
+                // Track when first member enters (for time accumulation)
+                if (teamState.membersInside === 1) {
+                    teamState.lastInTimestamp = evt.timestamp;
+                }
+                teamState.inCount++;
             } else if (evt.type === 'OUT') {
-                if (teamState.lastStatus === 'IN') {
-                    teamState.lastStatus = 'OUT';
+                teamState.membersInside = Math.max(0, teamState.membersInside - 1);
+                // Accumulate time when last member leaves
+                if (teamState.membersInside === 0 && teamState.lastInTimestamp) {
                     teamState.accumulatedTimeMs += (evt.timestamp - teamState.lastInTimestamp);
                     teamState.lastInTimestamp = null;
                 }
@@ -311,7 +321,7 @@ onValue(ref(db, 'events'), (snapshot) => {
     }
 });
 
-// Process Check IN / OUT
+// Show action modal for a team (called when QR is scanned or manual entry is submitted)
 window.processTeamEntry = function(scannedValue) {
     initAudio(); // Required to unlock audio context on iOS/Android from click
     
@@ -325,24 +335,80 @@ window.processTeamEntry = function(scannedValue) {
         return;
     }
 
+    // Show the action modal instead of auto-toggling
+    showActionModal(teamId);
+}
+
+// Show the Check-In / Check-Out action modal
+function showActionModal(teamId) {
+    pendingTeamId = teamId;
+    const displayName = getTeamDisplayName(teamId);
+    const teamState = gateData.teams[teamId];
+    const membersInside = teamState ? teamState.membersInside : 0;
+
+    document.getElementById('action-modal-team-name').textContent = displayName;
+    document.getElementById('action-modal-team-id').textContent = teamId;
+
+    // Render member dots
+    const dotsContainer = document.getElementById('action-modal-dots');
+    dotsContainer.innerHTML = '';
+    for (let i = 0; i < MAX_MEMBERS; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'member-dot' + (i < membersInside ? ' inside' : '');
+        dotsContainer.appendChild(dot);
+    }
+    document.getElementById('action-modal-count').textContent = `${membersInside} / ${MAX_MEMBERS}`;
+
+    // Enable/disable buttons based on member count
+    const checkinBtn = document.getElementById('action-modal-checkin-btn');
+    const checkoutBtn = document.getElementById('action-modal-checkout-btn');
+    
+    if (membersInside >= MAX_MEMBERS) {
+        checkinBtn.classList.add('disabled');
+    } else {
+        checkinBtn.classList.remove('disabled');
+    }
+    
+    if (membersInside <= 0) {
+        checkoutBtn.classList.add('disabled');
+    } else {
+        checkoutBtn.classList.remove('disabled');
+    }
+
+    // Show modal
+    document.getElementById('action-modal-backdrop').classList.add('active');
+}
+window.showActionModal = showActionModal;
+
+// Close the action modal
+function closeActionModal() {
+    document.getElementById('action-modal-backdrop').classList.remove('active');
+    pendingTeamId = null;
+}
+window.closeActionModal = closeActionModal;
+
+// Confirm check-in or check-out action from the modal
+window.confirmAction = function(actionType) {
+    if (!pendingTeamId) return;
+    
+    const teamId = pendingTeamId;
     const displayName = getTeamDisplayName(teamId);
     const now = Date.now();
-    let teamState = gateData.teams[teamId];
-    let isCurrentlyIn = (teamState && teamState.lastStatus === 'IN');
-    
-    const newEventType = isCurrentlyIn ? 'OUT' : 'IN';
-    
+
+    // Close modal immediately
+    closeActionModal();
+
     // Push event to Firebase
     push(ref(db, 'events'), {
         teamId: teamId,
-        type: newEventType,
+        type: actionType,
         timestamp: now
     }).then(() => {
-        if (newEventType === 'IN') {
-            showToast(`${displayName} Checked IN`, 'success');
+        if (actionType === 'IN') {
+            showToast(`${displayName} — Member Checked IN`, 'success');
             if (navigator.vibrate) navigator.vibrate([100]);
         } else {
-            showToast(`${displayName} Checked OUT`, 'info');
+            showToast(`${displayName} — Member Checked OUT`, 'info');
             if (navigator.vibrate) navigator.vibrate([100]);
         }
     }).catch(err => {
@@ -375,11 +441,17 @@ window.startScanner = function() {
             html5QrCode.pause();
             window.processTeamEntry(decodedText);
             
-            setTimeout(() => {
-                if(html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
-                    html5QrCode.resume();
+            // Resume scanner after modal is closed (check periodically)
+            const resumeCheck = setInterval(() => {
+                if (!pendingTeamId) { // modal was closed
+                    clearInterval(resumeCheck);
+                    setTimeout(() => {
+                        if(html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                            html5QrCode.resume();
+                        }
+                    }, 500);
                 }
-            }, 2500);
+            }, 300);
         }
     };
 
@@ -479,7 +551,7 @@ window.exportCSV = function() {
     const teamStats = Object.keys(gateData.teams).map(teamId => {
         const t = gateData.teams[teamId];
         let totalMs = t.accumulatedTimeMs;
-        if (t.lastStatus === 'IN') {
+        if (t.membersInside > 0 && t.lastInTimestamp) {
             totalMs += (now - t.lastInTimestamp);
         }
         return { teamId, totalMs };
@@ -590,10 +662,10 @@ function renderLeaderboard() {
     const teamStats = Object.keys(gateData.teams).map(teamId => {
         const t = gateData.teams[teamId];
         let totalMs = t.accumulatedTimeMs;
-        if (t.lastStatus === 'IN') {
+        if (t.membersInside > 0 && t.lastInTimestamp) {
             totalMs += (now - t.lastInTimestamp);
         }
-        return { teamId, totalMs, isWorking: t.lastStatus === 'IN' };
+        return { teamId, totalMs, isWorking: t.membersInside > 0, membersInside: t.membersInside };
     });
     
     if (teamStats.length === 0) {
