@@ -212,7 +212,7 @@ function getTeamDisplayName(teamId) {
 
 // Local State Derived from Firebase Events
 let gateData = {
-    activityLog: [], 
+    activityLog: [],
     teams: {} // { teamId: { membersInside: 0, accumulatedTimeMs: 0, lastInTimestamp: null, inCount: 0 } }
 };
 
@@ -243,7 +243,7 @@ function playTone(freq, type, duration, vol = 0.1) {
         gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
         oscillator.stop(audioCtx.currentTime + duration);
-    } catch(e) { console.error("Audio playback error", e); }
+    } catch (e) { console.error("Audio playback error", e); }
 }
 
 function playSuccess() {
@@ -262,9 +262,9 @@ function playError() {
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    
+
     toast.className = `transform transition-all duration-300 translate-y-[-150%] opacity-0 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 w-full border font-label-bold pointer-events-auto`;
-    
+
     if (type === 'success') {
         toast.classList.add('bg-green-50', 'text-green-800', 'border-green-300');
         toast.innerHTML = `<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span> <span>${message}</span>`;
@@ -278,11 +278,11 @@ function showToast(message, type = 'success') {
         toast.innerHTML = `<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">info</span> <span>${message}</span>`;
         playSuccess();
     }
-    
+
     container.appendChild(toast);
-    
+
     requestAnimationFrame(() => { toast.classList.remove('translate-y-[-150%]', 'opacity-0'); });
-    
+
     setTimeout(() => {
         toast.classList.add('translate-y-[-150%]', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
@@ -292,25 +292,25 @@ function showToast(message, type = 'success') {
 // Data Sync Logic
 onValue(ref(db, 'events'), (snapshot) => {
     const eventsObj = snapshot.val();
-    
+
     // Reset local state to recompute from log
     let newTeams = {};
     let newActivityLog = [];
-    
+
     if (eventsObj) {
         // Sort events chronologically to compute correctly
         const sortedEvents = Object.keys(eventsObj).map(key => ({
             eventId: key,
             ...eventsObj[key]
         })).sort((a, b) => a.timestamp - b.timestamp);
-        
+
         sortedEvents.forEach(evt => {
             const teamId = evt.teamId;
             let teamState = newTeams[teamId];
             if (!teamState) {
                 teamState = { membersInside: 0, accumulatedTimeMs: 0, lastInTimestamp: null, inCount: 0 };
             }
-            
+
             if (evt.type === 'IN') {
                 teamState.membersInside = Math.min(MAX_MEMBERS, teamState.membersInside + 1);
                 evt.memberNumber = teamState.membersInside; // e.g. "Member 2 Checked IN" means now 2 are inside
@@ -332,10 +332,10 @@ onValue(ref(db, 'events'), (snapshot) => {
             newActivityLog.unshift(evt); // newest first
         });
     }
-    
+
     gateData.teams = newTeams;
     gateData.activityLog = newActivityLog;
-    
+
     renderActivityLog();
     if (currentMainTab === 'stats') {
         renderLeaderboard();
@@ -343,9 +343,9 @@ onValue(ref(db, 'events'), (snapshot) => {
 });
 
 // Show action modal for a team (called when QR is scanned or manual entry is submitted)
-window.processTeamEntry = function(scannedValue) {
+window.processTeamEntry = function (scannedValue) {
     initAudio(); // Required to unlock audio context on iOS/Android from click
-    
+
     if (!scannedValue || scannedValue.trim() === '') return;
     scannedValue = scannedValue.trim();
 
@@ -383,13 +383,13 @@ function showActionModal(teamId) {
     // Enable/disable buttons based on member count
     const checkinBtn = document.getElementById('action-modal-checkin-btn');
     const checkoutBtn = document.getElementById('action-modal-checkout-btn');
-    
+
     if (membersInside >= MAX_MEMBERS) {
         checkinBtn.classList.add('disabled');
     } else {
         checkinBtn.classList.remove('disabled');
     }
-    
+
     if (membersInside <= 0) {
         checkoutBtn.classList.add('disabled');
     } else {
@@ -409,9 +409,9 @@ function closeActionModal() {
 window.closeActionModal = closeActionModal;
 
 // Confirm check-in or check-out action from the modal
-window.confirmAction = function(actionType) {
+window.confirmAction = function (actionType) {
     if (!pendingTeamId) return;
-    
+
     const teamId = pendingTeamId;
     const displayName = getTeamDisplayName(teamId);
     const now = Date.now();
@@ -439,9 +439,9 @@ window.confirmAction = function(actionType) {
 }
 
 // Undo Functionality
-window.undoEvent = function(eventId) {
+window.undoEvent = function (eventId) {
     initAudio();
-    if(confirm("Are you sure you want to undo this scan action?")) {
+    if (confirm("Are you sure you want to undo this scan action?")) {
         remove(ref(db, `events/${eventId}`))
             .then(() => showToast("Action undone.", "info"))
             .catch(() => showToast("Failed to undo.", "error"));
@@ -451,23 +451,23 @@ window.undoEvent = function(eventId) {
 // QR Code Scanner Integration
 let html5QrCode = null;
 
-window.startScanner = function() {
+window.startScanner = function () {
     initAudio(); // Unlock audio
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("qr-reader");
     }
-    
+
     const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-        if(html5QrCode.getState() === Html5QrcodeScannerState.SCANNING) {
+        if (html5QrCode.getState() === Html5QrcodeScannerState.SCANNING) {
             html5QrCode.pause();
             window.processTeamEntry(decodedText);
-            
+
             // Resume scanner after modal is closed (check periodically)
             const resumeCheck = setInterval(() => {
                 if (!pendingTeamId) { // modal was closed
                     clearInterval(resumeCheck);
                     setTimeout(() => {
-                        if(html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                        if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
                             html5QrCode.resume();
                         }
                     }, 500);
@@ -491,7 +491,7 @@ window.startScanner = function() {
         });
 }
 
-window.stopScanner = function() {
+window.stopScanner = function () {
     if (html5QrCode && html5QrCode.getState() !== Html5QrcodeScannerState.NOT_STARTED) {
         html5QrCode.stop().then(() => {
             document.getElementById('camera-overlay').classList.remove('hidden');
@@ -503,11 +503,11 @@ window.stopScanner = function() {
 }
 
 // View Logic
-let currentMainTab = 'scanner'; 
+let currentMainTab = 'scanner';
 
-window.switchMainTab = function(tab) {
+window.switchMainTab = function (tab) {
     currentMainTab = tab;
-    
+
     if (tab !== 'scanner') {
         window.stopScanner();
     }
@@ -531,11 +531,11 @@ window.switchMainTab = function(tab) {
     }
 }
 
-window.switchView = function(subView) {
+window.switchView = function (subView) {
     window.switchMainTab(subView);
 }
 
-window.toggleActivityDropdown = function() {
+window.toggleActivityDropdown = function () {
     const content = document.getElementById('activity-dropdown-content');
     const chevron = document.getElementById('activity-chevron');
     if (content.classList.contains('hidden')) {
@@ -548,7 +548,7 @@ window.toggleActivityDropdown = function() {
 }
 
 // UI Handlers
-window.handleManualSubmit = function() {
+window.handleManualSubmit = function () {
     initAudio();
     const input = document.getElementById('team-id');
     const val = input.value;
@@ -558,32 +558,32 @@ window.handleManualSubmit = function() {
     }
 }
 
-window.handleManualSubmitEnter = function(event) {
+window.handleManualSubmitEnter = function (event) {
     if (event.key === 'Enter') {
         window.handleManualSubmit();
     }
 }
 
 // CSV Export
-window.exportCSV = function() {
+window.exportCSV = function () {
     let csv = 'Team Name,Team ID,Members Inside\n';
-    
+
     const teamStats = Object.keys(gateData.teams).map(teamId => {
         const t = gateData.teams[teamId];
         return { teamId, membersInside: t.membersInside };
     });
-    
+
     // Sort by members inside (most first), then by team ID
     teamStats.sort((a, b) => b.membersInside - a.membersInside || a.teamId.localeCompare(b.teamId));
-    
+
     teamStats.forEach(stat => {
         const displayName = getTeamDisplayName(stat.teamId);
         csv += `${displayName} ${stat.membersInside},${stat.teamId},${stat.membersInside}\n`;
     });
-    
+
     csv += '\n\nRaw Activity Log\n';
     csv += 'Timestamp,Date,Time,Team Name,Team ID,Member #,Action\n';
-    
+
     const reversedLog = [...gateData.activityLog].reverse(); // chronological
     reversedLog.forEach(act => {
         const d = new Date(act.timestamp);
@@ -591,7 +591,7 @@ window.exportCSV = function() {
         const memberNum = act.memberNumber || '';
         csv += `${act.timestamp},${d.toLocaleDateString()},${d.toLocaleTimeString()},${displayName},${act.teamId},${memberNum},${act.type}\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -622,7 +622,7 @@ function formatDuration(ms) {
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
     const s = totalSecs % 60;
-    
+
     if (h > 0) return `${h}h ${m}m`;
     if (m > 0) return `${m}m ${s}s`;
     return `${s}s`;
@@ -631,9 +631,9 @@ function formatDuration(ms) {
 function renderActivityLog() {
     const list = document.getElementById('activity-list');
     const noAct = document.getElementById('no-activity');
-    if(!list || !noAct) return;
+    if (!list || !noAct) return;
     list.innerHTML = '';
-    
+
     if (gateData.activityLog.length === 0) {
         noAct.classList.remove('hidden');
     } else {
@@ -641,13 +641,13 @@ function renderActivityLog() {
         gateData.activityLog.slice(0, 15).forEach(act => {
             const li = document.createElement('li');
             li.className = "min-h-[64px] flex items-center justify-between px-md py-sm hover:bg-surface-container-low";
-            
+
             const isOut = act.type === 'OUT';
             const memberNum = act.memberNumber || '?';
-            const iconConfig = isOut 
+            const iconConfig = isOut
                 ? `<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">logout</span></div>`
                 : `<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span></div>`;
-                
+
             const badgeConfig = isOut
                 ? `<div class="bg-[#fef08a] text-[#854d0e] px-3 py-1 rounded-full font-caption font-medium">M${memberNum} OUT</div>`
                 : `<div class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full font-caption font-medium">M${memberNum} IN</div>`;
@@ -676,27 +676,27 @@ function renderActivityLog() {
 function renderLeaderboard() {
     const list = document.getElementById('leaderboard-list');
     const noStats = document.getElementById('no-stats');
-    if(!list || !noStats) return;
+    if (!list || !noStats) return;
     list.innerHTML = '';
-    
+
     const teamStats = Object.keys(gateData.teams).map(teamId => {
         const t = gateData.teams[teamId];
         return { teamId, membersInside: t.membersInside };
     });
-    
+
     if (teamStats.length === 0) {
         noStats.classList.remove('hidden');
         return;
     }
-    
+
     noStats.classList.add('hidden');
     // Sort by members inside (most first), then by team ID
     teamStats.sort((a, b) => b.membersInside - a.membersInside || a.teamId.localeCompare(b.teamId));
-    
+
     teamStats.forEach((stat, index) => {
         const li = document.createElement('li');
         li.className = "flex items-center justify-between p-4";
-        
+
         // Build member dots
         let dotsHtml = '<div class="flex gap-1">';
         for (let i = 0; i < 4; i++) {
